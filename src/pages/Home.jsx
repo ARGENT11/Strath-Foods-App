@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient'
+import Header from '../components/Header';
 
-const Home = ({ addToCart, cartCount }) => {
+const Home = ({ addToCart, cartCount, userProfile }) => {
   const navigate = useNavigate();
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);

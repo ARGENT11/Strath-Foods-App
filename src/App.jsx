@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-
+import { supabase } from '../supabaseClient'; 
 
 import Home from './pages/Home';
 import Checkout from './pages/Checkout';
@@ -13,17 +11,15 @@ import RestaurantDashboard from './pages/RestaurantDashboard';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 
 
-
-
-
 function App() {
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState(null); 
+  // FIXED: Added the missing userProfile state
+  const [userProfile, setUserProfile] = useState(null); 
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Initial Session Check
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -33,33 +29,33 @@ function App() {
 
     fetchSession();
 
-    // 2. Listen for Auth Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session) {
         await getProfile(session.user.id);
       } else {
         setUserRole(null);
+        setUserProfile(null); // Clear profile on logout
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch the role from the 'profiles' table
+  // FIXED: Updated to fetch and store the full profile (name, role, etc.)
   const getProfile = async (userId) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('role')
+      .select('*') // Fetches everything: full_name, role, etc.
       .eq('id', userId)
       .single();
 
     if (!error && data) {
+      setUserProfile(data); // This saves the info so the header can see it
       setUserRole(data.role);
     }
   };
 
-  // LOGOUT LOGIC
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -67,7 +63,8 @@ function App() {
     } else {
       setSession(null);
       setUserRole(null);
-      setCart([]); // Clear cart on logout
+      setUserProfile(null);
+      setCart([]); 
     }
   };
 
@@ -89,29 +86,26 @@ function App() {
     <Router>
       <div className="relative min-h-screen">
         <Routes>
-          {/* Public Routes */}
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/signup" element={!session ? <Signup /> : <Navigate to="/" />} />
 
-          {/* Dynamic Home Route based on Role */}
           <Route 
             path="/" 
             element={
               session ? (
-                userRole === 'restaurant' ? <RestaurantDashboard /> :
-                userRole === 'delivery' ? <DeliveryDashboard /> :
-                <Home addToCart={addToCart} cartCount={cart.length} />
+                userRole === 'restaurant' ? <RestaurantDashboard userProfile={userProfile} /> :
+                userRole === 'delivery' ? <DeliveryDashboard userProfile={userProfile} /> :
+                <Home addToCart={addToCart} cartCount={cart.length} userProfile={userProfile} />
               ) : (
                 <Navigate to="/login" />
               )
             } 
           />
 
-          {/* Customer Only Routes */}
           <Route 
             path="/checkout" 
             element={session && userRole === 'customer' ? (
-              <Checkout cart={cart} removeFromCart={removeFromCart} />
+              <Checkout cart={cart} removeFromCart={removeFromCart} userProfile={userProfile} />
             ) : (
               <Navigate to="/" />
             )} 
@@ -119,14 +113,12 @@ function App() {
           
           <Route 
             path="/tracking" 
-            element={session ? <Tracking /> : <Navigate to="/login" />} 
+            element={session ? <Tracking userProfile={userProfile} /> : <Navigate to="/login" />} 
           />
 
-          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
-        {/* GLOBAL LOGOUT BUTTON */}
         {session && (
           <button 
             onClick={handleLogout}
