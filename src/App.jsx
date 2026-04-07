@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-// PAGE IMPORTS (Make sure each is here only ONCE)
+
 import Home from './pages/Home';
 import Checkout from './pages/Checkout';
 import Tracking from './pages/Tracking';
@@ -18,7 +18,7 @@ import DeliveryDashboard from './pages/DeliveryDashboard';
 
 function App() {
   const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState(null); // 'customer', 'restaurant', or 'delivery'
+  const [userRole, setUserRole] = useState(null); 
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +46,7 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Function to fetch the role from the 'profiles' table
+  // Fetch the role from the 'profiles' table
   const getProfile = async (userId) => {
     const { data, error } = await supabase
       .from('profiles')
@@ -59,7 +59,20 @@ function App() {
     }
   };
 
+  // LOGOUT LOGIC
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      alert("Error logging out: " + error.message);
+    } else {
+      setSession(null);
+      setUserRole(null);
+      setCart([]); // Clear cart on logout
+    }
+  };
+
   const addToCart = (item) => setCart((prev) => [...prev, item]);
+  
   const removeFromCart = (indexToRemove) => {
     setCart((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
@@ -74,38 +87,58 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
-        <Route path="/signup" element={!session ? <Signup /> : <Navigate to="/" />} />
+      <div className="relative min-h-screen">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route path="/signup" element={!session ? <Signup /> : <Navigate to="/" />} />
 
-        {/* Dynamic Home Route based on Role */}
-        <Route 
-          path="/" 
-          element={
-            session ? (
-              userRole === 'restaurant' ? <RestaurantDashboard /> :
-              userRole === 'delivery' ? <DeliveryDashboard /> :
-              <Home addToCart={addToCart} cartCount={cart.length} />
+          {/* Dynamic Home Route based on Role */}
+          <Route 
+            path="/" 
+            element={
+              session ? (
+                userRole === 'restaurant' ? <RestaurantDashboard /> :
+                userRole === 'delivery' ? <DeliveryDashboard /> :
+                <Home addToCart={addToCart} cartCount={cart.length} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
+          />
+
+          {/* Customer Only Routes */}
+          <Route 
+            path="/checkout" 
+            element={session && userRole === 'customer' ? (
+              <Checkout cart={cart} removeFromCart={removeFromCart} />
             ) : (
-              <Navigate to="/login" />
-            )
-          } 
-        />
+              <Navigate to="/" />
+            )} 
+          />
+          
+          <Route 
+            path="/tracking" 
+            element={session ? <Tracking /> : <Navigate to="/login" />} 
+          />
 
-        {/* Customer Only Routes */}
-        <Route 
-          path="/checkout" 
-          element={session && userRole === 'customer' ? <Checkout cart={cart} removeFromCart={removeFromCart} /> : <Navigate to="/" />} 
-        />
-        
-        <Route 
-          path="/tracking" 
-          element={session ? <Tracking /> : <Navigate to="/login" />} 
-        />
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
 
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+        {/* GLOBAL LOGOUT BUTTON */}
+        {session && (
+          <button 
+            onClick={handleLogout}
+            className="fixed bottom-6 left-6 z-50 flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-xl border border-gray-100 text-red-500 font-bold hover:bg-red-50 transition-all active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sign Out
+          </button>
+        )}
+      </div>
     </Router>
   );
 }

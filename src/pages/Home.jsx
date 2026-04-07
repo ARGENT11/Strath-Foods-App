@@ -56,7 +56,10 @@ useEffect(() => {
 
 
   return (
+    <div className="min-h-screen bg-slate-50">
+    <Header userProfile={userProfile} />
     <div className="bg-white text-slate-900 font-sans antix,laliased min-h-screen">
+      
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-white flex justify-between items-center px-6 py-4 border-b border-gray-100 shadow-sm">
         <div className="flex items-center gap-3">
@@ -129,6 +132,8 @@ useEffect(() => {
   </div>
 )}
     </div>
+    </div>
+
   );
 };
 

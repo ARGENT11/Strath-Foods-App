@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
+import Header from '../components/Header';
+
 
 const DeliveryDashboard = () => {
   const [availableOrders, setAvailableOrders] = useState([]);
@@ -80,6 +82,8 @@ const DeliveryDashboard = () => {
   if (loading) return <div className="p-10 text-center font-bold text-[#003366]">Loading Deliveries...</div>;
 
   return (
+    <div className="min-h-screen bg-slate-50">
+    <Header userProfile={userProfile} />
     <div className="min-h-screen bg-slate-50 p-6 pb-24">
       <header className="mb-8">
         <h1 className="text-2xl font-black text-[#003366]">Rider Portal</h1>
@@ -151,6 +155,8 @@ const DeliveryDashboard = () => {
         </div>
       )}
     </div>
+    </div>
+
   );
 };
 

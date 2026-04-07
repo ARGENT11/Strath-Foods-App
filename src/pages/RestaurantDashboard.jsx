@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
+import Header from '../components/Header';
+
 
 const RestaurantDashboard = () => {
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' or 'menu'
@@ -89,6 +91,8 @@ const RestaurantDashboard = () => {
   if (loading) return <div className="p-10 text-center font-bold text-[#003366] animate-pulse">Opening Kitchen...</div>;
 
   return (
+    <div className="min-h-screen bg-slate-50">
+    <Header userProfile={userProfile} />
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header Nav */}
       <nav className="bg-white border-b px-6 py-4 sticky top-0 z-20 flex justify-between items-center shadow-sm">
@@ -164,6 +168,7 @@ const RestaurantDashboard = () => {
           </div>
         )}
       </main>
+    </div>
     </div>
   );
 };
