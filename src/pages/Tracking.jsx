@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import Header from '../components/Header';
-import { Clock, Utensils, Bike, CheckCircle2, Copy, ShieldAlert, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Clock, Utensils, Bike, CheckCircle2, Copy, ShieldAlert, ArrowLeft, RefreshCw, X, Eye } from 'lucide-react';
 import Toast from '../components/Toast';
 
 const Tracking = ({ userProfile }) => {
@@ -11,6 +11,9 @@ const Tracking = ({ userProfile }) => {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null);
+  
+  // NEW: State to manage PIN visibility
+  const [showPin, setShowPin] = useState(true);
 
   async function fetchLatestOrder() {
     try {
@@ -207,26 +210,49 @@ const Tracking = ({ userProfile }) => {
             </div>
           </div>
 
-          {/* Security PIN */}
+          {/* Security PIN Section */}
           {order.delivery_pin && (
-            <div className="bg-orange-50/60 border-2 border-dashed border-[#E77206] p-5 rounded-3xl text-center">
-              <div className="inline-flex items-center gap-1 text-[10px] font-black text-[#E77206] uppercase tracking-widest mb-2">
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>Delivery PIN</span>
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-4xl font-black text-[#003366] tracking-[0.3em] font-mono">
-                  {order.delivery_pin}
-                </span>
-                <button 
+            showPin ? (
+              <div className="bg-orange-50/60 border-2 border-dashed border-[#E77206] p-5 rounded-3xl text-center relative">
+                {/* Close Button to hide PIN */}
+                <button
                   type="button"
-                  onClick={copyPin}
-                  className="p-2 rounded-xl bg-white border border-orange-200 text-[#E77206]"
+                  onClick={() => setShowPin(false)}
+                  className="absolute top-3 right-3 p-1.5 rounded-full text-orange-400 hover:text-[#E77206] hover:bg-orange-100 transition-colors"
+                  title="Hide PIN"
                 >
-                  {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <X className="w-4 h-4" />
                 </button>
+
+                <div className="inline-flex items-center gap-1 text-[10px] font-black text-[#E77206] uppercase tracking-widest mb-2">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Delivery PIN</span>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-4xl font-black text-[#003366] tracking-[0.3em] font-mono">
+                    {order.delivery_pin}
+                  </span>
+                  <button 
+                    type="button"
+                    onClick={copyPin}
+                    className="p-2 rounded-xl bg-white border border-orange-200 text-[#E77206] hover:bg-orange-50 transition-colors"
+                    title="Copy PIN"
+                  >
+                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Button to reveal PIN */
+              <button
+                type="button"
+                onClick={() => setShowPin(true)}
+                className="w-full py-4 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 text-slate-600 font-bold text-xs hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Show Delivery PIN</span>
+              </button>
+            )
           )}
         </div>
       </main>

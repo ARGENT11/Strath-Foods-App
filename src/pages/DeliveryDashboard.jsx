@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import Header from '../components/Header';
-import { Bike, MapPin, CheckCircle2, ShieldCheck, DollarSign, PackageCheck, AlertCircle, RefreshCw, Utensils, Clock, Loader2 } from 'lucide-react';
+import { Bike, MapPin, CheckCircle2, ShieldCheck, DollarSign, PackageCheck, AlertCircle, RefreshCw, Utensils, Clock, Loader2, X } from 'lucide-react';
 import Toast from '../components/Toast';
 
 const DeliveryDashboard = ({ userProfile }) => {
@@ -12,6 +12,9 @@ const DeliveryDashboard = ({ userProfile }) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [inputPin, setInputPin] = useState('');
   const [toast, setToast] = useState(null);
+  
+  // NEW: State to manage PIN input box visibility
+  const [showPin, setShowPin] = useState(true);
 
   // Helper to safely extract order ID regardless of DB column naming
   const getOrderId = (orderObj) => orderObj?.order_id || orderObj?.id;
@@ -228,29 +231,51 @@ const DeliveryDashboard = ({ userProfile }) => {
               </div>
             </div>
 
-            {/* Verification Input Box */}
-            <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15">
-              <div className="flex items-center justify-center gap-1 text-xs font-extrabold text-[#E77206] uppercase tracking-wider mb-2">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Customer Verification PIN</span>
-              </div>
+            {/* Verification Input Box Toggle */}
+            {showPin ? (
+              <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15 relative">
+                {/* Close Button to hide PIN Input */}
+                <button
+                  type="button"
+                  onClick={() => setShowPin(false)}
+                  className="absolute top-3 right-3 p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                  title="Hide PIN Input"
+                >
+                  <X className="w-4 h-4" />
+                </button>
 
-              <input 
-                type="text" 
-                placeholder="0000" 
-                maxLength="4"
-                className="w-full bg-white text-[#003366] p-4 rounded-xl font-black text-center text-3xl tracking-[0.5em] outline-none border-2 border-transparent focus:border-[#E77206] transition-all shadow-inner font-mono"
-                value={inputPin}
-                onChange={(e) => setInputPin(e.target.value)}
-              />
-              <p className="text-[11px] text-center mt-3 text-slate-300">
-                Ask student for their 4-digit code before handing over food
-              </p>
-            </div>
+                <div className="flex items-center justify-center gap-1 text-xs font-extrabold text-[#E77206] uppercase tracking-wider mb-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Customer Verification PIN</span>
+                </div>
+
+                <input 
+                  type="text" 
+                  placeholder="0000" 
+                  maxLength="4"
+                  className="w-full bg-white text-[#003366] p-4 rounded-xl font-black text-center text-3xl tracking-[0.5em] outline-none border-2 border-transparent focus:border-[#E77206] transition-all shadow-inner font-mono"
+                  value={inputPin}
+                  onChange={(e) => setInputPin(e.target.value)}
+                />
+                <p className="text-[11px] text-center mt-3 text-slate-300">
+                  Ask student for their 4-digit code before handing over food
+                </p>
+              </div>
+            ) : (
+              /* Button to reveal PIN Input */
+              <button
+                type="button"
+                onClick={() => setShowPin(true)}
+                className="w-full py-4 rounded-2xl border-2 border-dashed border-white/20 bg-white/5 text-white font-bold text-xs hover:bg-white/10 transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Enter Customer Verification PIN</span>
+              </button>
+            )}
 
             <button 
               type="button"
-              disabled={isCompleting}
+              disabled={isCompleting || !showPin}
               onClick={completeDelivery}
               className="w-full bg-gradient-to-r from-[#E77206] to-amber-600 hover:from-amber-600 hover:to-[#E77206] text-white py-4 rounded-2xl font-black shadow-lg shadow-[#E77206]/30 active:scale-95 transition-all uppercase tracking-wider text-sm flex items-center justify-center gap-2 disabled:opacity-50"
             >
