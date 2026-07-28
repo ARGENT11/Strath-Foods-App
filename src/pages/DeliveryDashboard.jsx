@@ -13,7 +13,7 @@ const DeliveryDashboard = ({ userProfile }) => {
   const [inputPin, setInputPin] = useState('');
   const [toast, setToast] = useState(null);
   
-  // NEW: State to manage PIN input box visibility
+  // State to manage PIN input box visibility
   const [showPin, setShowPin] = useState(true);
 
   // Helper to safely extract order ID regardless of DB column naming
@@ -141,13 +141,25 @@ const DeliveryDashboard = ({ userProfile }) => {
     if (enteredPin && enteredPin === expectedPin) {
       setIsCompleting(true);
       try {
-        const { error } = await supabase
+        // 10-second network timeout failsafe
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Network timeout. Please check your connection and try again.")), 10000)
+        );
+
+        const updatePromise = supabase
           .from('orders')
-          .update({ status: 'completed' })
+          .update({ status: 'delivered' })
           .eq(idCol, targetId)
           .select();
 
+        const { data, error } = await Promise.race([updatePromise, timeout]);
+
         if (error) throw error;
+
+        // Ensure rows were actually updated (prevents silent RLS policy failures)
+        if (!data || data.length === 0) {
+          throw new Error("Update failed. You may lack permission to update this order.");
+        }
 
         setToast({ 
           type: 'success', 
@@ -156,7 +168,8 @@ const DeliveryDashboard = ({ userProfile }) => {
         setInputPin('');
         await fetchDeliveryData();
       } catch (err) {
-        setToast({ type: 'error', message: "Error completing delivery: " + err.message });
+        console.error("Completion error:", err);
+        setToast({ type: 'error', message: err.message || "Error completing delivery." });
       } finally {
         setIsCompleting(false);
       }
